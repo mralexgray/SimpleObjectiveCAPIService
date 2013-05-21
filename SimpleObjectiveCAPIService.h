@@ -1,14 +1,12 @@
 //
-//  SimpleAPIService.h
-//  meatup
+//  SimpleObjectiveCAPIService
 //
 //  Created by Gareth Shapiro on 14/05/2013.
-//  Copyright (c) 2013 Gareth Shapiro. All rights reserved.
 //
 
 /*
 
-    A wrapper around very simple NSConnection calls to a web service and locading local stub versions of the api responses.
+    A wrapper around very simple NSConnection calls to a web service and loading local stub versions of the api responses.
 
 */
 #import <Foundation/Foundation.h>
@@ -25,7 +23,8 @@
 #define API_LIVE_HOST @"localhost/" // for live version
 #define API_LIVE_ENDPOINT @"meatup/mobile/" // for live version
 
-@interface SimpleAPIService : NSObject
+@interface
+: NSObject
 
     @property (nonatomic , strong) NSString *methodName;
     @property (nonatomic , strong) NSString *requestType;

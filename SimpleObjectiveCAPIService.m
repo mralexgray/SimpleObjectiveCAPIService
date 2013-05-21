@@ -6,9 +6,9 @@
 //  Copyright (c) 2013 Gareth Shapiro. All rights reserved.
 //
 
-#import "SimpleAPIService.h"
+#import "SimpleObjectiveCAPIService"
 
-@interface SimpleAPIService()
+@interface SimpleObjectiveCAPIService()
 
     @property BOOL isLive;
     @property (nonatomic , strong )  NSURL *localURL;
