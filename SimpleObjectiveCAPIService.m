@@ -1,25 +1,45 @@
 //
-//  SimpleAPIService.m
-//  meatup
+//  SimpleObjectiveCAPIService.h
 //
 //  Created by Gareth Shapiro on 14/05/2013.
-//  Copyright (c) 2013 Gareth Shapiro. All rights reserved.
 //
+//  See : http://www.garethshapiro.com/item/simple-objective-c-api-service
+//
+//  For more information
+//
+//  To provide local versions of live API endpoints use the following convention
+//
+//  REQUEST_TYPE.methodName.json
+//
+//  A POST call to http://apihost/userlist
+//
+//  becomes
+//
+//  POST.userlist.json
+//
+//  If the method name has a slash then substitute this for a period.
+//
+//  REQUEST_TYPE.method/name.json
+//
+//  A POST call to http://apihost/user/list
+//
+//  becomes
+//
+//  POST.user.list.json
+//
+//  Create files describing mock JSON responses with these names and add them to the target.
 
-#import "SimpleObjectiveCAPIService"
+#import "SimpleObjectiveCAPIService.h"
 
 @interface SimpleObjectiveCAPIService()
 
-    @property BOOL isLive;
-    @property (nonatomic , strong )  NSURL *localURL;
-
     -(void)loadLive;
     -(void)loadLocal;
-    -(NSString *)createLocalURLString;
+    -(void)createLocalURLString;
 
 @end
 
-@implementation SimpleAPIService
+@implementation SimpleObjectiveCAPIService
 
 -(id)init{
     
@@ -30,58 +50,89 @@
         self.isLive = NO;       // change to YES when the web API is to be used instead of the local files.
        
         // don't use setters 
-        _methodName = @"";      // never nil
+        _methodName = @"";      
         _requestType = @"";
+        
+        self.localURLString = @"";
     }
     
     return self;
     
 }
 
+/*
+ 
+    Accessing code provides an endpoint name which is used in the second part of the local file name.
 
+    For eg :
+
+    requestType.eventList.json
+ 
+    Often the endpoint name can have a / for eg :
+ 
+    user/profile
+ 
+    this is converted to :
+ 
+    user.profile
+ 
+    as slashes prove problematic in files names.
+
+ */
 -(void)setMethodName:(NSString *)methodName{
     
     _methodName = methodName;
-    
-    self.localURL = [
-                      
-      [NSBundle mainBundle]
-      URLForResource: [self createLocalURLString]
-      withExtension: @"json"
-                      
-   ];
+
+    [self createLocalURLString];
     
 }
 
+/*
+ 
+     Accessing code supplies one of :
+     
+     @"POST"
+     @"GET"
+     @"PUT"
+     @"DELETE"
+     
+     which is used in the first part of the local file name.  For eg :
+     
+     POST.methodName.json
+ 
+ */
 -(void)setRequestType:(NSString *)requestType{
     
     _requestType = requestType;
     
-    self.localURL = [
-                     
-         [NSBundle mainBundle]
-         URLForResource: [self createLocalURLString]
-         withExtension: @"json"
-                     
-    ];
+    [self createLocalURLString];
     
 }
 
--(NSString *)createLocalURLString{
+/*
+ 
+    A method only used by setMethodName: and setRequestType: to build the local file name.
+ 
+ */
+-(void)createLocalURLString{
     
-    NSString *s = @"";
-    
-    if( _methodName.length > 0 && _requestType.length > 0){
+    if( _requestType.length > 0 && _methodName.length > 0){
         
-        s = [[_methodName stringByReplacingOccurrencesOfString:@"/" withString:@"."] stringByAppendingString: [@"." stringByAppendingString: _requestType]];
+        self.localURLString =  [[_requestType stringByAppendingString:
+                                        [@"." stringByAppendingString:
+                    [_methodName stringByReplacingOccurrencesOfString:@"/" withString:@"."] ]]
+                         stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+    
         
     }
     
-    return [s stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
-    
 }
 
-
+/*
+ 
+    A common accessor to retrieve API data regardless of whether the SimpleObjectiveCAPIService is retrieving JSON from a live source or from a local file.
+ 
+ */
 -(void)load{
     
     self.recievedData = nil;
@@ -98,6 +149,11 @@
     
 }
 
+/*
+ 
+    A method only called by the load method of this class when JSON is being retrieved from a live source.
+ 
+ */
 -(void)loadLive{
     
     if(
@@ -125,64 +181,96 @@
         apiURLRequest.allHTTPHeaderFields = self.parameters;
 
         NSOperationQueue *apiQueue = [NSOperationQueue mainQueue];
-        
-        __block SimpleAPIService *safeSelf = self;
+
         
         [NSURLConnection sendAsynchronousRequest:apiURLRequest
                                            queue:apiQueue
                                completionHandler:^(NSURLResponse *apiResponse , NSData *apiData , NSError *apiError   ){
                                    
-               if( apiData != nil ){
+                                   
+               NSHTTPURLResponse* httpResponse = (NSHTTPURLResponse*)apiResponse;
+              
+               if( [httpResponse statusCode] == 200 ){
                    
-                   safeSelf.recievedData = apiData;
+                   if( apiData != nil ){
+                       
+                       self.recievedData = apiData;
+                       
+                       [[NSNotificationCenter defaultCenter] postNotificationName:SIMPLE_API_SERVICE_DATA_RECIEVED object:self];
+                       
+                   } else if( apiError ){
+                       
+                       NSLog(@"SimpleObjectiveCAPIService has resulted in an error %@" , apiError);
+                       
+                   }
                    
-                    [[NSNotificationCenter defaultCenter] postNotificationName:SIMPLE_API_SERVICE_DATA_RECIEVED object:self];
+               } else {
                    
-               } else if( apiError ){
-                   
-                   AppLog(@"SimpleAPIService.loadLive has resulted in an error %@" , apiError);
+                   NSNumber *statusCode = [[NSNumber alloc] initWithInt:[httpResponse statusCode]];   
+                   NSDictionary *notificationObject = [[NSDictionary alloc] initWithObjectsAndKeys:statusCode , @"statusCode", nil];
+                   [[NSNotificationCenter defaultCenter] postNotificationName:SIMPLE_API_SERVICE_HTTP_ERROR object:notificationObject ];
                    
                }
-           
-           
+                                   
+
         }];
 
     } else {
         
-        AppLog(@"You have called [SimpleAPIService load] and SimpleAPIService.methodName, SimpleAPIService.requestType or SimpleAPIService.parameters has not been set.");
+        [NSException raise:@"Problem loading network resource." format:@"You need to specifiy SimpleObjectiveCAPIService methodName and SimpleObjectiveCAPIService requestType before calling SimpleObjectiveCAPIService load."];
         
     }
     
 }
 
+/*
+ 
+    A method only called by the load method of this class when JSON is being retrieved from a local source.
+ 
+ */
 -(void)loadLocal{
     
-    if( self.methodName.length > 0 && self.requestType.length > 0){
+    if( self.localURLString.length > 0){
 
-        self.recievedData = [[NSData alloc] initWithContentsOfURL:self.localURL];
+        NSURL *localURL = [[NSBundle mainBundle] URLForResource: self.localURLString withExtension: API_RESPONSE_TYPE];
         
-        if( self.recievedData != nil ){
+        if( localURL != nil ){
             
-            [[NSNotificationCenter defaultCenter] postNotificationName:SIMPLE_API_SERVICE_DATA_RECIEVED object:self];
+            NSError *error;
+
+            self.recievedData = [[NSData alloc] initWithContentsOfURL: localURL];
+
+            if( self.recievedData != nil ){
+
+                [[NSNotificationCenter defaultCenter] postNotificationName:SIMPLE_API_SERVICE_DATA_RECIEVED object:self];
+
+            } else {
+
+                [NSException raise:@"Problem reading a local resource." format:@"There has been a problem reading a local resource named %@.%@ : %@", self.localURLString , API_RESPONSE_TYPE , error.description];
+
+            }
             
         } else {
-            
-             AppLog(@"loadLocal has resulted in nil data recieved.  Confirm that you have a JSON file matching the methodName and requestType. Eg : methodName.requestType.json - If your methodName has slashes then replace these with periods in the stub file ony.  Eg : user/profile GET endpoint becomes user.profile.GET.json");
+
+             [NSException raise:@"Problem reading a local resource." format: @"A local resources named %@.%@ could not be found.", self.localURLString , API_RESPONSE_TYPE];
         }
         
-
-
     } else {
         
-        AppLog(@"You need to specifiy SimpleAPIService.methodName and SimpleAPIService.requestType before calling [SimpleAPIService load]");
+        [NSException raise:@"Problem reading a local resource." format:@"You need to specifiy SimpleObjectiveCAPIService methodName and SimpleObjectiveCAPIService requestType before calling SimpleObjectiveCAPIService load."];
         
     }
     
 }
 
+
+/*
+ 
+    Clean Up
+ 
+*/
 -(void) prepareToRemove{
     
-    self.localURL = nil;
     self.methodName = nil;
     self.requestType = nil;
     self.parameters = nil;
