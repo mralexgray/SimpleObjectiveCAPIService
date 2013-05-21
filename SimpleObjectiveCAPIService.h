@@ -1,8 +1,8 @@
-//
-//  SimpleObjectiveCAPIService
+//  SimpleObjectiveCAPIService.m
 //
 //  Created by Gareth Shapiro on 14/05/2013.
 //
+//  See : http://www.garethshapiro.com/item/simple-objective-c-api-service
 
 /*
 
