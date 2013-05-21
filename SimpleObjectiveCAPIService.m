@@ -196,7 +196,7 @@
                        
                        self.recievedData = apiData;
                        
-                       [[NSNotificationCenter defaultCenter] postNotificationName:SIMPLE_API_SERVICE_DATA_RECIEVED object:self];
+                       [[NSNotificationCenter defaultCenter] postNotificationName:SIMPLE_API_SERVICE_DATA_RECEIVED object:self];
                        
                    } else if( apiError ){
                        
@@ -234,6 +234,8 @@
 
         NSURL *localURL = [[NSBundle mainBundle] URLForResource: self.localURLString withExtension: API_RESPONSE_TYPE];
         
+        NSLog(@"localURL %@" , localURL);
+        
         if( localURL != nil ){
             
             NSError *error;
@@ -242,7 +244,7 @@
 
             if( self.recievedData != nil ){
 
-                [[NSNotificationCenter defaultCenter] postNotificationName:SIMPLE_API_SERVICE_DATA_RECIEVED object:self];
+                [[NSNotificationCenter defaultCenter] postNotificationName:SIMPLE_API_SERVICE_DATA_RECEIVED object:self];
 
             } else {
 
