@@ -251,7 +251,6 @@
 
         NSURL *localURL = [[NSBundle mainBundle] URLForResource: self.localURLString withExtension: API_RESPONSE_TYPE];
 
-        
         if( localURL != nil ){
             
             NSError *error;
