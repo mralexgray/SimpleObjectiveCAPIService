@@ -37,6 +37,8 @@
     -(void)loadLocal;
     -(void)createLocalURLString;
 
+    @property (nonatomic , strong )  NSString *localURLString;
+
 @end
 
 @implementation SimpleObjectiveCAPIService
@@ -47,13 +49,18 @@
     
     if (self) {
         
-        self.isLive = NO;       // change to YES when the web API is to be used instead of the local files.
+        self.isLive = YES;       // change to YES when the web API is to be used instead of the local files.
        
         // don't use setters 
         _methodName = @"";      
         _requestType = @"";
         
         self.localURLString = @"";
+        
+        self.lastStatusCode = 0; // test for 0 to see if there has been a request made with this SimpleObjectiveCAPIService
+        self.lastMethodName = @"";
+        self.lastRequestType = @"";
+        self.lastLocalURLString = @"";
     }
     
     return self;
@@ -136,6 +143,13 @@
 -(void)load{
     
     self.recievedData = nil;
+    self.lastError = nil;
+    self.lastLocalURLString = [[self.localURLString stringByAppendingString:@"."] stringByAppendingString:API_RESPONSE_TYPE];
+    
+    self.lastMethodName = self.methodName;
+    self.lastRequestType = self.requestType;
+    self.lastParameters = self.parameters;
+    self.lastStatusCode = 0;
     
     if( self.isLive == YES ){
         
@@ -159,7 +173,6 @@
     if(
         
         self.methodName.length > 0 &&
-        self.parameters != nil &&
         self.requestType.length > 0
        
         ){
@@ -179,10 +192,9 @@
 
         apiURLRequest.HTTPMethod = self.requestType;
         apiURLRequest.allHTTPHeaderFields = self.parameters;
-
+        [apiURLRequest setCachePolicy:NSURLRequestReloadIgnoringLocalCacheData];
         NSOperationQueue *apiQueue = [NSOperationQueue mainQueue];
 
-        
         [NSURLConnection sendAsynchronousRequest:apiURLRequest
                                            queue:apiQueue
                                completionHandler:^(NSURLResponse *apiResponse , NSData *apiData , NSError *apiError   ){
@@ -190,25 +202,30 @@
                                    
                NSHTTPURLResponse* httpResponse = (NSHTTPURLResponse*)apiResponse;
               
+               self.lastStatusCode = [httpResponse statusCode];
+                    
+               self.methodName = @"";
+               self.requestType = @"";
+               self.localURLString = @"";
+               self.parameters = nil;
+          
                if( [httpResponse statusCode] == 200 ){
                    
                    if( apiData != nil ){
                        
                        self.recievedData = apiData;
                        
-                       [[NSNotificationCenter defaultCenter] postNotificationName:SIMPLE_API_SERVICE_DATA_RECEIVED object:self];
+                   } else {
                        
-                   } else if( apiError ){
-                       
-                       NSLog(@"SimpleObjectiveCAPIService has resulted in an error %@" , apiError);
-                       
+                      self.lastError = apiError;
                    }
                    
-               } else {
                    
-                   NSNumber *statusCode = [[NSNumber alloc] initWithInt:[httpResponse statusCode]];   
-                   NSDictionary *notificationObject = [[NSDictionary alloc] initWithObjectsAndKeys:statusCode , @"statusCode", nil];
-                   [[NSNotificationCenter defaultCenter] postNotificationName:SIMPLE_API_SERVICE_HTTP_ERROR object:notificationObject ];
+                   [[NSNotificationCenter defaultCenter] postNotificationName:SIMPLE_API_SERVICE_DATA_RECEIVED object:self];
+                   
+               } else {
+
+                   [[NSNotificationCenter defaultCenter] postNotificationName:SIMPLE_API_SERVICE_HTTP_ERROR object:self ];
                    
                }
                                    
@@ -233,8 +250,7 @@
     if( self.localURLString.length > 0){
 
         NSURL *localURL = [[NSBundle mainBundle] URLForResource: self.localURLString withExtension: API_RESPONSE_TYPE];
-        
-        NSLog(@"localURL %@" , localURL);
+
         
         if( localURL != nil ){
             
@@ -262,6 +278,11 @@
         [NSException raise:@"Problem reading a local resource." format:@"You need to specifiy SimpleObjectiveCAPIService methodName and SimpleObjectiveCAPIService requestType before calling SimpleObjectiveCAPIService load."];
         
     }
+
+    self.methodName = @"";
+    self.requestType = @"";
+    self.localURLString = @"";
+    self.parameters = nil;
     
 }
 

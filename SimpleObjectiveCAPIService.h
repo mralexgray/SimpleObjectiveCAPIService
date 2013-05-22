@@ -26,12 +26,18 @@
 @interface SimpleObjectiveCAPIService : NSObject
 
     @property BOOL isLive;
-    @property (nonatomic , strong )  NSString *localURLString;
 
     @property (nonatomic , strong) NSString *methodName;
     @property (nonatomic , strong) NSString *requestType;
     @property (nonatomic , strong) NSDictionary *parameters;
     @property (nonatomic , strong) NSData *recievedData;
+
+    @property int lastStatusCode;
+    @property (nonatomic , strong) NSString *lastMethodName;
+    @property (nonatomic , strong) NSString *lastRequestType;
+    @property (nonatomic , strong) NSDictionary *lastParameters;
+    @property (nonatomic , strong) NSString *lastLocalURLString;
+    @property (nonatomic , strong) NSError *lastError;
 
     -(id)init;
     -(void)load;
