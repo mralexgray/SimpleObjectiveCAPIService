@@ -49,7 +49,7 @@
     
     if (self) {
         
-        self.isLive = NO;       // change to YES when the web API is to be used instead of the local files.
+        _isLive = NO;       // change to YES when the web API is to be used instead of the local files.
        
         // don't use setters 
         _methodName = @"";      

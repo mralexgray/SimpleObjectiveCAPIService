@@ -25,7 +25,7 @@
 
 @interface SimpleObjectiveCAPIService : NSObject
 
-    @property BOOL isLive;
+    @property (readonly) BOOL isLive;
 
     @property (nonatomic , strong) NSString *methodName;
     @property (nonatomic , strong) NSString *requestType;
