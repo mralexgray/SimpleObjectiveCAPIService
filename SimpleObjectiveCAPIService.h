@@ -32,12 +32,12 @@
     @property (nonatomic , strong) NSDictionary *parameters;
     @property (nonatomic , strong) NSData *recievedData;
 
-    @property int lastStatusCode;
-    @property (nonatomic , strong) NSString *lastMethodName;
-    @property (nonatomic , strong) NSString *lastRequestType;
-    @property (nonatomic , strong) NSDictionary *lastParameters;
-    @property (nonatomic , strong) NSString *lastLocalURLString;
-    @property (nonatomic , strong) NSError *lastError;
+    @property (readonly) int lastStatusCode;
+    @property (nonatomic , strong, readonly) NSString *lastMethodName;
+    @property (nonatomic , strong, readonly) NSString *lastRequestType;
+    @property (nonatomic , strong, readonly) NSDictionary *lastParameters;
+    @property (nonatomic , strong, readonly) NSString *lastLocalURLString;
+    @property (nonatomic , strong, readonly) NSError *lastError;
 
     -(id)init;
     -(void)load;

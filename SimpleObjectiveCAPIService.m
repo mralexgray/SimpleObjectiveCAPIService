@@ -49,7 +49,7 @@
     
     if (self) {
         
-        self.isLive = YES;       // change to YES when the web API is to be used instead of the local files.
+        self.isLive = NO;       // change to YES when the web API is to be used instead of the local files.
        
         // don't use setters 
         _methodName = @"";      
@@ -57,10 +57,10 @@
         
         self.localURLString = @"";
         
-        self.lastStatusCode = 0; // test for 0 to see if there has been a request made with this SimpleObjectiveCAPIService
-        self.lastMethodName = @"";
-        self.lastRequestType = @"";
-        self.lastLocalURLString = @"";
+        _lastStatusCode = 0; // test for 0 to see if there has been a request made with this SimpleObjectiveCAPIService
+        _lastMethodName = @"";
+        _lastRequestType = @"";
+        _lastLocalURLString = @"";
     }
     
     return self;
@@ -143,13 +143,13 @@
 -(void)load{
     
     self.recievedData = nil;
-    self.lastError = nil;
-    self.lastLocalURLString = [[self.localURLString stringByAppendingString:@"."] stringByAppendingString:API_RESPONSE_TYPE];
+    _lastError = nil;
+    _lastLocalURLString = [[self.localURLString stringByAppendingString:@"."] stringByAppendingString:API_RESPONSE_TYPE];
     
-    self.lastMethodName = self.methodName;
-    self.lastRequestType = self.requestType;
-    self.lastParameters = self.parameters;
-    self.lastStatusCode = 0;
+    _lastMethodName = self.methodName;
+    _lastRequestType = self.requestType;
+    _lastParameters = self.parameters;
+    _lastStatusCode = 0;
     
     if( self.isLive == YES ){
         
@@ -202,7 +202,7 @@
                                    
                NSHTTPURLResponse* httpResponse = (NSHTTPURLResponse*)apiResponse;
               
-               self.lastStatusCode = [httpResponse statusCode];
+               _lastStatusCode = [httpResponse statusCode];
                     
                self.methodName = @"";
                self.requestType = @"";
@@ -217,7 +217,7 @@
                        
                    } else {
                        
-                      self.lastError = apiError;
+                      _lastError = apiError;
                    }
                    
                    
@@ -297,6 +297,12 @@
     self.requestType = nil;
     self.parameters = nil;
     self.recievedData = nil;
+    
+    _lastMethodName = nil;
+    _lastRequestType = nil;
+    _lastParameters = nil;
+    _lastLocalURLString = nil;
+    _lastError = nil;
  
 }
 
