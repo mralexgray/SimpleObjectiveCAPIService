@@ -43,6 +43,22 @@
 
 @implementation SimpleObjectiveCAPIService
 
+@synthesize isLive = _isLive;
+
+@synthesize methodName = _methodName;
+@synthesize requestType = _requestType;
+@synthesize parameters = _parameters;
+@synthesize recievedData = _recievedData;
+
+@synthesize lastStatusCode = _lastStatusCode;
+@synthesize lastMethodName = _lastMethodName;
+@synthesize lastRequestType = _lastRequestType;
+@synthesize lastParameters = _lastParameters;
+@synthesize lastLocalURLString = _lastLocalURLString;
+@synthesize lastError = _lastError;
+
+@synthesize localURLString = _localURLString;
+
 -(id)init{
     
     self = [super init];
